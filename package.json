@@ -1,0 +1,27 @@
+{
+  "name": "tasky-discord-bot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18.17"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "nodemon",
+    "deploy:commands": "tsx src/register-commands.ts",
+    "release": "npm run build && npm run deploy:commands && npm start"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "discord.js": "^14.16.3",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.7",
+    "nodemon": "^3.1.10",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.3"
+  }
+}
