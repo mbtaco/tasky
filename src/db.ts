@@ -24,7 +24,7 @@ export async function fetchChannelMessages(channelId: string, limit: number): Pr
   if (!pool) return [];
   const sql = `
     SELECT id, user_id, channel_id, role, content, timestamp
-    FROM messages
+    FROM "ai-history"
     WHERE channel_id = $1
     ORDER BY timestamp DESC
     LIMIT $2
@@ -51,7 +51,7 @@ export async function insertMessage(params: {
   const { userId, channelId, role, content } = params;
   const ts = params.timestamp ?? new Date();
   const sql = `
-    INSERT INTO messages (user_id, channel_id, role, content, timestamp)
+    INSERT INTO "ai-history" (user_id, channel_id, role, content, timestamp)
     VALUES ($1, $2, $3, $4, $5)
   `;
   await pool.query(sql, [userId, channelId, role, content, ts]);
@@ -59,6 +59,6 @@ export async function insertMessage(params: {
 
 export async function clearChannelMessages(channelId: string): Promise<void> {
   if (!pool) return;
-  await pool.query('DELETE FROM messages WHERE channel_id = $1', [channelId]);
+  await pool.query('DELETE FROM "ai-history" WHERE channel_id = $1', [channelId]);
 }
 

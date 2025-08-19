@@ -4,6 +4,7 @@ declare namespace NodeJS {
     DISCORD_CLIENT_ID?: string;
     DISCORD_GUILD_ID?: string;
     GEMINI_API_KEY?: string;
+    DATABASE_URL?: string;
   }
 }
 
