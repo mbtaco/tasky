@@ -96,10 +96,16 @@ export function registerDmAiHandler(client: Client) {
       for (let i = 0; i < chunks.length; i++) {
         const chunk = chunks[i];
         const embed = new EmbedBuilder()
-          .setTitle(i === 0 ? 'AI Response' : `AI Response (part ${i + 1})`)
           .setDescription(chunk)
-          .setColor(Colors.Blurple)
-          .setTimestamp();
+          .setColor(0x5865F2)
+          .setAuthor({
+            name: 'Gemini 2.5 Flash',
+            url: 'https://deepmind.google/models/gemini/',
+            iconURL: 'https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/google-gemini-icon.png',
+          });
+        if (chunks.length > 1) {
+          embed.setFooter({ text: `Part ${i + 1} / ${chunks.length}` });
+        }
         await message.author.send({ embeds: [embed] });
       }
 
