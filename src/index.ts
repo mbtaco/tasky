@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { Client, Events, GatewayIntentBits, Partials, ActivityType } from 'discord.js';
+import { Client, Events, GatewayIntentBits, Partials, ActivityType, MessageFlags } from 'discord.js';
 import { registerDmAiHandler } from './handlers/dm';
 import fs from 'fs';
 import path from 'path';
@@ -55,7 +55,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply({ content: `Error: ${message}` }).catch(() => {});
     } else {
-      await interaction.reply({ content: `Error: ${message}`, ephemeral: true }).catch(() => {});
+      await interaction.reply({ content: `Error: ${message}`, flags: MessageFlags.Ephemeral }).catch(() => {});
     }
   }
 });

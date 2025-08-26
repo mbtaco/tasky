@@ -94,7 +94,7 @@ const command: BotCommand = {
       return;
     }
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const results = await Promise.allSettled(
       members.map((m) => m.voice.setChannel(target).then(() => m.user.tag))
