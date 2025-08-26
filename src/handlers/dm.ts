@@ -54,7 +54,7 @@ export function registerDmAiHandler(client: Client) {
       const model = genai.getGenerativeModel({
         model: 'gemini-2.5-flash',
         systemInstruction:
-          `You are a helpful Discord bot. Be concise and friendly. Address the user by their username when appropriate. The current user's username is "${message.author.username}" (discriminator/tag may be hidden). If the user asks about server-specific actions, remind them you can only chat in DMs.`
+          `You are a helpful Discord bot called Tasky. Be concise and friendly. Use Discord compatible markdown. The current user's username is "${message.author.username}" If the user asks about server-specific actions, remind them you can only chat in DMs.`
       });
 
       // Build history from Postgres if configured; fallback to in-memory
