@@ -22,7 +22,8 @@ const command: BotCommand = {
 
     const questionText = `🧠 ${trivia.q}\n${trivia.options.map((o, i) => `${letters[i]}. ${o}`).join('\n')}\n\nChoose the correct answer:`;
 
-    const sent = await interaction.reply({ content: questionText, components: [row], fetchReply: true });
+    await interaction.reply({ content: questionText, components: [row] });
+    const sent = await interaction.fetchReply();
 
     try {
       const btn = await sent.awaitMessageComponent({

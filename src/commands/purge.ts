@@ -30,7 +30,7 @@ const command: BotCommand = {
       await interaction.reply({ content: 'This command can only be used in text channels.', flags: MessageFlags.Ephemeral });
       return;
     }
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     const deleted = await channel.bulkDelete(amount, true).catch(() => null);
     if (!deleted) {
       await interaction.editReply('Failed to delete messages. I can only delete messages newer than 14 days and need proper permissions.');
