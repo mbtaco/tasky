@@ -54,7 +54,7 @@ export function registerDmAiHandler(client: Client) {
       const model = genai.getGenerativeModel({
         model: 'gemini-2.5-flash',
         systemInstruction:
-          'You are a helpful Discord bot. Be concise and friendly. If the user asks about server-specific actions, remind them you can only chat in DMs.'
+          `You are a helpful Discord bot. Be concise and friendly. Address the user by their username when appropriate. The current user's username is "${message.author.username}" (discriminator/tag may be hidden). If the user asks about server-specific actions, remind them you can only chat in DMs.`
       });
 
       // Build history from Postgres if configured; fallback to in-memory
@@ -82,17 +82,25 @@ export function registerDmAiHandler(client: Client) {
         return;
       }
 
-      const MAX_LEN = 1995;
+      // Discord embed description limit is 4096 characters.
+      // We'll slice the response into 4096-char chunks and send as multiple embeds if necessary.
+      const EMBED_DESC_MAX = 4096;
       const chunks: string[] = [];
       let remaining = response;
-      while (remaining.length > MAX_LEN) {
-        chunks.push(remaining.slice(0, MAX_LEN));
-        remaining = remaining.slice(MAX_LEN);
+      while (remaining.length > EMBED_DESC_MAX) {
+        chunks.push(remaining.slice(0, EMBED_DESC_MAX));
+        remaining = remaining.slice(EMBED_DESC_MAX);
       }
       chunks.push(remaining);
 
-      for (const chunk of chunks) {
-        await message.author.send(chunk);
+      for (let i = 0; i < chunks.length; i++) {
+        const chunk = chunks[i];
+        const embed = new EmbedBuilder()
+          .setTitle(i === 0 ? 'AI Response' : `AI Response (part ${i + 1})`)
+          .setDescription(chunk)
+          .setColor(Colors.Blurple)
+          .setTimestamp();
+        await message.author.send({ embeds: [embed] });
       }
 
       // Persist to DB when available; otherwise update in-memory fallback
