@@ -109,7 +109,7 @@ export function registerDmAiHandler(client: Client) {
         const model = genai.getGenerativeModel({
           model: 'gemini-2.5-flash',
           systemInstruction:
-            `You are a helpful Discord bot called Tasky. Be concise and friendly. Use Discord compatible markdown. The current user's username is "${message.author.username}" If the user asks about server-specific actions, remind them you can only chat in DMs.`
+            `You are a helpful AI assistant. Be concise and friendly. Use Discord-compatible markdown. The current user's username is "${message.author.username}". If asked about server-specific actions, remind the user you can only chat in DMs.`
         });
 
         // Build history from Postgres if configured; fallback to in-memory
@@ -301,7 +301,7 @@ export function registerDmAiHandler(client: Client) {
             const model = genai.getGenerativeModel({
               model: 'gemini-2.5-flash',
               systemInstruction:
-                `You are a helpful Discord bot called Tasky. Be concise and friendly. Use Discord compatible markdown.`
+                `You are a helpful AI assistant. Be concise and friendly. Use Discord-compatible markdown.`
             });
             const chat = model.startChat({ history: baseHistory });
             const result = await chat.sendMessage(lastUserText);
