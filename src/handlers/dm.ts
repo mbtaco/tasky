@@ -26,6 +26,14 @@ export function registerDmAiHandler(client: Client) {
     new ButtonBuilder().setCustomId('ai_regen').setLabel('Regenerate').setStyle(ButtonStyle.Primary)
   );
 
+  function buildSystemInstruction(currentUsername?: string): string {
+    const nameLine = 'You are a helpful AI assistant named Tasky.';
+    const styleLine = 'Be concise and friendly. Use Discord-compatible markdown.';
+    const userLine = currentUsername ? ` The current user's username is "${currentUsername}".` : '';
+    const dmLine = ' If asked about server-specific actions, remind the user you can only chat in DMs.';
+    return `${nameLine} ${styleLine}${userLine}${dmLine}`;
+  }
+
   // Global cooldown and request queue to respect Gemini free tier 10 RPM (~6s)
   const COOLDOWN_MS = 6000;
   type QueueTask = () => Promise<void>;
@@ -108,8 +116,7 @@ export function registerDmAiHandler(client: Client) {
 
         const model = genai.getGenerativeModel({
           model: 'gemini-2.5-flash',
-          systemInstruction:
-            `You are a helpful AI assistant. Be concise and friendly. Use Discord-compatible markdown. The current user's username is "${message.author.username}". If asked about server-specific actions, remind the user you can only chat in DMs.`
+          systemInstruction: buildSystemInstruction(message.author.username)
         });
 
         // Build history from Postgres if configured; fallback to in-memory
@@ -252,7 +259,7 @@ export function registerDmAiHandler(client: Client) {
       }
 
       if (interaction.customId === 'ai_regen') {
-        await interaction.deferReply();
+        await interaction.deferUpdate();
         enqueueRequest(async () => {
           try {
             await waitForCooldown();
@@ -300,30 +307,36 @@ export function registerDmAiHandler(client: Client) {
 
             const model = genai.getGenerativeModel({
               model: 'gemini-2.5-flash',
-              systemInstruction:
-                `You are a helpful AI assistant. Be concise and friendly. Use Discord-compatible markdown.`
+              systemInstruction: buildSystemInstruction(interaction.user.username)
             });
             const chat = model.startChat({ history: baseHistory });
             const result = await chat.sendMessage(lastUserText);
             const response = result.response?.text?.() ?? null;
             if (!response || response.trim().length === 0) {
-              await interaction.editReply('Sorry, I could not generate a response.');
+              try {
+                await interaction.message.edit({ content: 'Sorry, I could not generate a response.', embeds: [], components: [CONTROLS_ROW()] });
+              } catch {}
               return;
             }
 
-            // Chunk embeds and send in a single interaction reply update
+            // Build embeds and edit the original message in place
             const EMBED_DESC_MAX = 4096;
             const chunks: string[] = [];
             let remaining = response;
-            while (remaining.length > EMBED_DESC_MAX) {
+            while (remaining.length > EMBED_DESC_MAX && chunks.length < 10) {
               chunks.push(remaining.slice(0, EMBED_DESC_MAX));
               remaining = remaining.slice(EMBED_DESC_MAX);
             }
-            chunks.push(remaining);
+            if (chunks.length < 10) {
+              chunks.push(remaining);
+            } else {
+              // If more than 10 embeds would be required, truncate the remainder
+              const last = chunks.pop() ?? '';
+              const truncated = `${last.slice(0, EMBED_DESC_MAX - 12)}\n...[truncated]`;
+              chunks.push(truncated);
+            }
 
-            // First embed replaces deferred reply; additional embeds are followups
-            for (let i = 0; i < chunks.length; i++) {
-              const chunk = chunks[i];
+            const embeds = chunks.map((chunk, i) => {
               const embed = new EmbedBuilder()
                 .setDescription(chunk)
                 .setColor(0x5865F2)
@@ -335,12 +348,10 @@ export function registerDmAiHandler(client: Client) {
               if (chunks.length > 1) {
                 embed.setFooter({ text: `Part ${i + 1} / ${chunks.length}` });
               }
-              if (i === 0) {
-                await interaction.editReply({ embeds: [embed], components: [CONTROLS_ROW()] });
-              } else {
-                await interaction.followUp({ embeds: [embed], components: [CONTROLS_ROW()] });
-              }
-            }
+              return embed;
+            });
+
+            await interaction.message.edit({ embeds, components: [CONTROLS_ROW()] });
 
             // Persist regenerated response
             if (isDbEnabled) {
